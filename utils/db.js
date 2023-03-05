@@ -5,7 +5,6 @@ const DEFAULT_PORT = 27017;
 const DEFAULT_DATABASE = 'files_manager';
 
 class DBClient {
-
   constructor() {
     const host = process.env.DB_HOST || DEFAULT_HOST;
     const port = process.env.DB_PORT || DEFAULT_PORT;
