@@ -15,7 +15,7 @@ class DBClient {
     this.client = new MongoClient(uri, { useUnifiedTopology: true });
 
     this.client.connect();
-    this.db = this.client.db(database);
+    this.db = this.client.db();
   }
 
   async isAlive() {
