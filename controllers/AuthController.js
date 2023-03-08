@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
-import sha1 from 'sha1';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
+import { v4 as uuidv4 } from 'uuid';
+import sha1 from 'sha1';
 
 class AuthController {
   static async getConnect(req, res) {
@@ -11,9 +11,9 @@ class AuthController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const base64Credentials = authHeader.split(' ')[1];
-    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-    const [email, password] = credentials.split(':');
+    const encodedCredentials = authHeader.split(' ')[1];
+    const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
+    const [email, password] = decodedCredentials.split(':');
 
     const collection = dbClient.client.db().collection('users');
     const user = await collection.findOne({ email, password: sha1(password) });
@@ -24,7 +24,9 @@ class AuthController {
 
     const token = uuidv4();
     const key = `auth_${token}`;
-    redisClient.set(key, user._id.toString(), 86400);
+    const expiresIn = 86400; // 24 hours in seconds
+
+    redisClient.setex(key, expiresIn, user.id);
 
     return res.status(200).json({ token });
   }
