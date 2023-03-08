@@ -12,7 +12,7 @@ class AuthController {
     }
 
     const base64Credentials = authHeader.split(' ')[1];
-    const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+    const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
     const [email, password] = credentials.split(':');
 
     const collection = dbClient.client.db().collection('users');
@@ -30,7 +30,7 @@ class AuthController {
   }
 
   static async getDisconnect(req, res) {
-    const token = req.headers['x-token'];
+    const token = req.headers['X-Token'];
 
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
