@@ -12,14 +12,11 @@ class AuthController {
     }
 
     const encodedCredentials = authHeader.split(' ')[1];
-    let decodedCredentials;
-    try {
-      decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
-    } catch (error) {
-      return res.status(400).json({ error: 'Invalid Base64 content' });
-    }
+    const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
 
     const [email, password] = decodedCredentials.split(':');
+
+    if (!email || !password) { return res.status(401).send({ error: 'Unauthorized' });}
 
     const collection = dbClient.client.db().collection('users');
     const user = await collection.findOne({ email, password: sha1(password) });
@@ -31,7 +28,7 @@ class AuthController {
     const key = `auth_${token}`;
     const expiresIn = 86400; // 24 hours in seconds
 
-    redisClient.set(key, user.id, expiresIn);
+    redisClient.set(key, user._id.toString(), expiresIn);
 
     return res.status(200).json({ token });
   }
