@@ -1,19 +1,18 @@
 import { v4 as uuidv4 } from 'uuid';
+import { promisify } from 'util';
 import sha1 from 'sha1';
-import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
+import redisClient from '../utils/redis';
 
 class AuthController {
-  static async getConnect(req, res) {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Basic ')) {
+  static async connect(req, res) {
+    const { authorization } = req.headers;
+    if (!authorization || !authorization.startsWith('Basic ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const encodedCredentials = authHeader.split(' ')[1];
-    const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
-    const [email, password] = decodedCredentials.split(':');
+    const credentials = Buffer.from(authorization.slice(6), 'base64').toString('ascii');
+    const [email, password] = credentials.split(':');
 
     const collection = dbClient.client.db().collection('users');
     const user = await collection.findOne({ email, password: sha1(password) });
@@ -24,30 +23,27 @@ class AuthController {
 
     const token = uuidv4();
     const key = `auth_${token}`;
-    const expiresIn = 86400; // 24 hours in seconds
+    const value = user.id.toString();
+    const expireTime = 86400; // 24 hours in seconds
 
-    redisClient.setex(key, expiresIn, user.id);
+    await promisify(redisClient.client.setex).bind(redisClient.client)(key, expireTime, value);
 
     return res.status(200).json({ token });
   }
 
-  static async getDisconnect(req, res) {
+  static async disconnect(req, res) {
     const token = req.headers['x-token'];
-
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const key = `auth_${token}`;
-    const userId = await redisClient.get(key);
-
-    if (!userId) {
+    const deleted = await promisify(redisClient.client.del).bind(redisClient.client)(key);
+    if (!deleted) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    redisClient.del(key);
-
-    return res.status(204).send();
+    return res.status(204).end();
   }
 }
 
