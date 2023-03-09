@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import sha1 from 'sha1';
 import dbClient from '../utils/db';
@@ -41,14 +42,24 @@ class UsersController {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const collection = dbClient.client.db().collection('users');
-    const user = await collection.findOne({ id: userId });
+    let user;
+
+    try {
+      user = await dbClient.client
+        .db()
+        .collection('users')
+        .findOne({ _id: ObjectId(userId) });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
 
     if (!user) {
+      console.error(`User not found for id: ${userId}`);
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    return res.status(200).json({ id: user.id, email: user.email });
+    return res.status(200).json({ id: user._id, email: user.email });
   }
 
   static async connect(req, res) {
