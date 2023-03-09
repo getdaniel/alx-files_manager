@@ -25,7 +25,7 @@ class AuthController {
     const key = `auth_${token}`;
     const expiresIn = 86400; // 24 hours in seconds
 
-    redisClient.set(key, expiresIn, user.id);
+    redisClient.set(key, user.id, expiresIn);
 
     return res.status(200).json({ token });
   }
