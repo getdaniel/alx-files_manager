@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
@@ -71,6 +72,60 @@ class FilesController {
       isPublic,
       parentId: parentId === '0' ? '0' : parentFolder._id.toString(),
     });
+  }
+
+  static async getShow(req, res) {
+    const token = req.headers['x-token'];
+    const fileId = req.params.id;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const file = await dbClient.client
+      .db()
+      .collection('files')
+      .findOne({ _id: ObjectId(fileId), userId });
+
+    if (!file) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    return res.status(200).json(file);
+  }
+
+  static async getIndex(req, res) {
+    const token = req.headers['x-token'];
+    const parentId = req.query.parentId || '0';
+    const page = parseInt(req.query.page, 10) || 0;
+
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const key = `auth_${token}`;
+    const userId = await redisClient.get(key);
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const files = await dbClient.client
+      .db()
+      .collection('files')
+      .find({ userId, parentId })
+      .skip(page * 20)
+      .limit(20)
+      .toArray();
+
+    return res.status(200).json(files);
   }
 }
 
