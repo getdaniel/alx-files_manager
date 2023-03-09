@@ -12,7 +12,13 @@ class AuthController {
     }
 
     const encodedCredentials = authHeader.split(' ')[1];
-    const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
+    let decodedCredentials;
+    try {
+      decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid Base64 content' });
+    }
+
     const [email, password] = decodedCredentials.split(':');
 
     const collection = dbClient.client.db().collection('users');
