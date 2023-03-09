@@ -12,7 +12,7 @@ class AuthController {
     }
 
     const encodedCredentials = authHeader.split(' ')[1];
-    const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString();
+    const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString('ascii');
     const [email, password] = decodedCredentials.split(':');
 
     const collection = dbClient.client.db().collection('users');
