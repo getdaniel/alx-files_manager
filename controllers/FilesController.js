@@ -8,7 +8,11 @@ class FilesController {
   static async postUpload(req, res) {
     const token = req.headers['x-token'];
     const {
-      name, type, parentId = '0', isPublic = false, data,
+      name,
+      type,
+      parentId = '0',
+      isPublic = false,
+      data,
     } = req.body;
 
     if (!token) {
@@ -27,7 +31,7 @@ class FilesController {
     }
 
     if (!type || !['folder', 'file', 'image'].includes(type)) {
-      return res.status(400).json({ error: 'Missing type' });
+      return res.status(400).json({ error: 'Missing or invalid type' });
     }
 
     if (type !== 'folder' && !data) {
@@ -54,14 +58,23 @@ class FilesController {
       parentId,
     };
 
-    if (type !== 'folder') {
-      const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
+    if (type === 'folder') {
+      if (parentId !== '0') {
+        const parentPath = path.join(parentFile.localPath);
+        const folderPath = path.join(parentPath, name);
+        await fs.promises.mkdir(folderPath);
+        newFile.localPath = folderPath;
+      } else {
+        const folderPath = path.join(process.env.FOLDER_PATH || '/tmp/files_manager', uuidv4());
+        await fs.promises.mkdir(folderPath);
+        newFile.localPath = folderPath;
+      }
+    } else {
+      const folderPath = parentId !== '0' ? path.join(parentFile.localPath) : path.join(process.env.FOLDER_PATH || '/tmp/files_manager', uuidv4());
       const uuid = uuidv4();
       const localPath = path.join(folderPath, uuid);
       const clearData = Buffer.from(data, 'base64');
-
       await fs.promises.writeFile(localPath, clearData);
-
       newFile.localPath = localPath;
     }
 
