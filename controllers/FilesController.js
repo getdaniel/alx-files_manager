@@ -34,13 +34,14 @@ class FilesController {
       return res.status(400).json({ error: 'Missing data' });
     }
 
+    let parentFile = null;
     if (parentId !== '0') {
-      const parentFile = await dbClient.client.db().collection('files').findOne({ _id: parentId });
+      parentFile = await dbClient.client.db().collection('files').findOne({ _id: parentId });
       if (!parentFile) {
         return res.status(400).json({ error: 'Parent not found' });
       }
 
-      if (type !== 'folder') {
+      if (parentFile.type !== 'folder') {
         return res.status(400).json({ error: 'Parent is not a folder' });
       }
     }
