@@ -39,12 +39,16 @@ class FilesController {
 
     let newFile;
     if (type === 'folder') {
+      let folderParentId = '0';
+      if (parentId !== '0') {
+        folderParentId = parentFolder._id.toString();
+      }
       newFile = {
         userId,
         name,
         type,
         isPublic,
-        parentId: parentId === '0' ? '0' : parentFolder._id.toString(),
+        parentId: folderParentId,
       };
     } else {
       const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
@@ -52,12 +56,16 @@ class FilesController {
       const localPath = path.join(folderPath, uuid);
       const clearData = Buffer.from(data, 'base64');
       await fs.promises.writeFile(localPath, clearData);
+      let fileParentId = '0';
+      if (parentId !== '0') {
+        fileParentId = parentFolder._id.toString();
+      }
       newFile = {
         userId,
         name,
         type,
         isPublic,
-        parentId: parentId === '0' ? '0' : parentFolder._id.toString(),
+        parentId: fileParentId,
         localPath,
       };
     }
@@ -70,7 +78,7 @@ class FilesController {
       name,
       type,
       isPublic,
-      parentId: parentId === '0' ? '0' : parentFolder._id.toString(),
+      parentId: newFile.parentId,
     });
   }
 
