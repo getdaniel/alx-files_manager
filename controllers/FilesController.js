@@ -31,7 +31,7 @@ class FilesController {
 
     let parentFolder;
     if (parentId !== '0') {
-      parentFolder = await dbClient.client.db().collection('files').findOne({ _id: parentId, type: 'folder' });
+      parentFolder = await dbClient.client.db().collection('files').findOne({ _id: ObjectId(parentId), type: 'folder' });
       if (!parentFolder) {
         return res.status(400).json({ error: 'Parent not found' });
       }
