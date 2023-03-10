@@ -1,2 +1,2 @@
-# alx-files_manager
-File Manager App with Python
+# Files Manager
+File Manager App with NodeJS, ExpressJS, Redis and MongoDB
