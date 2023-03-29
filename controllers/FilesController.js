@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { getMongoInstance, ObjectId } from 'mongodb';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
@@ -198,11 +198,11 @@ class FilesController {
 
     return res.status(200).json(file.value);
   }
-  
+
   static async getFile(req, res) {
     try {
       const fileId = req.params.id;
-      const userId = req.userId;
+      const { userId } = req;
       const filesCollection = getMongoInstance().db().collection('files');
       const file = await filesCollection.findOne({ _id: ObjectId(fileId) });
 
