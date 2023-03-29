@@ -3,8 +3,12 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 import mime from 'mime-types';
+import { Queue } from 'bull';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+
+// Create a queue to process file generation jobs
+const fileQueue = new Queue('file generation');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -72,7 +76,14 @@ class FilesController {
     }
 
     const result = await dbClient.client.db().collection('files').insertOne(newFile);
-
+    // Add a job to the queue for generating thumbnails
+    if (type === 'image') {
+      const fileId = result.insertedId.toString();
+      fileQueue.add({
+        userId,
+        fileId,
+      });
+    }
     return res.status(201).json({
       id: result.insertedId.toString(),
       userId,
